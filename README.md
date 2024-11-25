@@ -92,7 +92,7 @@ graph TD;
 ```java
 import java.util.*;
 
-public class LabWork {
+public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 

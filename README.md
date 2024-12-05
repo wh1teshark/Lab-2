@@ -90,90 +90,127 @@ graph TD;
 
 ### 5. Программа
 ```java
-import java.util.*;
+import java.util.Scanner;
 
-public class Main {
+public class MatrixProcessor {
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
-        // Ввод числа строк
-        System.out.print("Введите количество строк N: ");
-        int N = scanner.nextInt();
-        List<List<Double>> array = new ArrayList<>();
+        // Ввод количества строк
+        System.out.print("Введите количество строк (N): ");
+        int n = scanner.nextInt();
 
-        // Ввод массива
-        for (int i = 0; i < N; i++) {
+        // Объявление матрицы и массивов для сортировки
+        int[][] matrix = new int[n][];
+        int[] negativeCount = new int[n];
+        int[] positiveSum = new int[n];
+
+        // Ввод данных
+        for (int i = 0; i < n; i++) {
             System.out.print("Введите количество элементов в строке " + (i + 1) + ": ");
-            int Mi = scanner.nextInt();
-            List<Double> row = new ArrayList<>();
-            System.out.println("Введите элементы строки " + (i + 1) + ": ");
-            for (int j = 0; j < Mi; j++) {
-                row.add(scanner.nextDouble());
+            int m = scanner.nextInt();
+            matrix[i] = new int[m];
+
+            System.out.println("Введите элементы строки " + (i + 1) + ":");
+            for (int j = 0; j < m; j++) {
+                matrix[i][j] = scanner.nextInt();
+                // Подсчёт отрицательных чисел
+                if (matrix[i][j] < 0) {
+                    negativeCount[i]++;
+                }
+                // Подсчёт суммы положительных чисел
+                if (matrix[i][j] > 0) {
+                    positiveSum[i] += matrix[i][j];
+                }
             }
-            array.add(row);
         }
 
-        // Сортировка строк
-        array.sort((row1, row2) -> {
-            long negatives1 = row1.stream().filter(x -> x < 0).count();
-            long negatives2 = row2.stream().filter(x -> x < 0).count();
-            if (negatives1 != negatives2) {
-                return Long.compare(negatives1, negatives2);
-            }
-            double positivesSum1 = row1.stream().filter(x -> x > 0).mapToDouble(Double::doubleValue).sum();
-            double positivesSum2 = row2.stream().filter(x -> x > 0).mapToDouble(Double::doubleValue).sum();
-            return Double.compare(positivesSum1, positivesSum2);
-        });
+        // Сортировка строк по количеству отрицательных чисел, затем по сумме положительных чисел
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = i + 1; j < n; j++) {
+                if (negativeCount[i] > negativeCount[j] ||
+                        (negativeCount[i] == negativeCount[j] && positiveSum[i] > positiveSum[j])) {
+                    // Меняем строки местами
+                    int[] tempRow = matrix[i];
+                    matrix[i] = matrix[j];
+                    matrix[j] = tempRow;
 
-        // Нахождение максимального элемента
-        double max = Double.NEGATIVE_INFINITY;
+                    // Меняем данные для сортировки
+                    int tempNeg = negativeCount[i];
+                    negativeCount[i] = negativeCount[j];
+                    negativeCount[j] = tempNeg;
+
+                    int tempSum = positiveSum[i];
+                    positiveSum[i] = positiveSum[j];
+                    positiveSum[j] = tempSum;
+                }
+            }
+        }
+
+        // Поиск максимального элемента и его индексов
+        int max = Integer.MIN_VALUE;
         int maxRow = -1, maxCol = -1;
-        for (int i = 0; i < array.size(); i++) {
-            for (int j = 0; j < array.get(i).size(); j++) {
-                if (array.get(i).get(j) > max) {
-                    max = array.get(i).get(j);
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                if (matrix[i][j] > max) {
+                    max = matrix[i][j];
                     maxRow = i;
                     maxCol = j;
                 }
             }
         }
 
-        // Вывод массива в формате матрицы
-        int maxRowLength = array.stream().mapToInt(List::size).max().orElse(0);
-        System.out.println("Отсортированный массив в виде матрицы:");
-        for (List<Double> row : array) {
-            for (int j = 0; j < maxRowLength; j++) {
-                if (j < row.size()) {
-                    System.out.printf("%.2f ", row.get(j));
+        // Вывод матрицы в формате таблицы
+        System.out.println("Отсортированная матрица:");
+        int maxLength = getMaxRowLength(matrix);
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < maxLength; j++) {
+                if (j < matrix[i].length) {
+                    System.out.print(matrix[i][j] + "\t");
                 } else {
-                    System.out.print("* ");
+                    System.out.print("*\t");
                 }
             }
             System.out.println();
         }
 
-        // Вывод максимального элемента
-        System.out.println("Максимальный элемент: " + max + " (строка " + (maxRow + 1) + ", позиция " + (maxCol + 1) + ")");
+        System.out.println("Максимальный элемент: " + max + " (строка " + (maxRow + 1) + ", столбец " + (maxCol + 1) + ")");
 
-        // Преобразование массива (1/число)
-        System.out.println("Массив после замены на обратные значения:");
-        for (List<Double> row : array) {
-            for (int j = 0; j < row.size(); j++) {
-                row.set(j, 1 / row.get(j));
+        // Преобразование элементов на обратные значения
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                if (matrix[i][j] != 0) {
+                    matrix[i][j] = 1 / matrix[i][j];
+                }
             }
         }
-        for (List<Double> row : array) {
-            for (int j = 0; j < maxRowLength; j++) {
-                if (j < row.size()) {
-                    System.out.printf("%.2f ", row.get(j));
+
+        // Вывод преобразованной матрицы
+        System.out.println("Преобразованная матрица:");
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < maxLength; j++) {
+                if (j < matrix[i].length) {
+                    System.out.print(matrix[i][j] + "\t");
                 } else {
-                    System.out.print("* ");
+                    System.out.print("*\t");
                 }
             }
             System.out.println();
         }
 
         scanner.close();
+    }
+
+    // Вспомогательная функция для определения максимальной длины строки
+    private static int getMaxRowLength(int[][] matrix) {
+        int maxLength = 0;
+        for (int[] row : matrix) {
+            if (row.length > maxLength) {
+                maxLength = row.length;
+            }
+        }
+        return maxLength;
     }
 }
 
